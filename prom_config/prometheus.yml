@@ -1,0 +1,34 @@
+# file: prometheus.yml
+# my global config
+
+# rule_files:
+#   - '/etc/prometheus/ssl_expiry.rules'
+
+# remote_write:
+# - url: https://prometheus***/api/prom/push
+#   basic_auth:
+#     username: *****
+#     password: *****
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'prometheus'
+    static_configs:
+    # 9090 is the prometheus server port
+    - targets: ['localhost:9090']
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - https://google.com
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115  # Blackbox exporter scraping address

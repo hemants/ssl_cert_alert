@@ -1,0 +1,43 @@
+version: "3.9"
+services:
+  blackbox:
+    image: prom/blackbox-exporter:latest
+    container_name: blackbox_exporter
+    restart: unless-stopped
+    volumes:
+      - ./blackbox_exporter/blackbox.yml:/config/blackbox.yml
+    expose:
+      - 9115
+    ports:
+      - 9115:9115
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prom_config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prom_config/ssl_expiry.rules:/etc/prometheus/ssl_expiry.rules
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    links:
+      - blackbox:blackbox
+    expose:
+      - 9090
+    ports:
+      - 9090:9090
+    depends_on:
+      - blackbox
+  
+  grafana:
+    image: grafana/grafana:latest
+    container_name: monitoring_grafana
+    restart: unless-stopped
+    links:
+      - prometheus:prometheus
+    expose:
+      - 3000
+    ports:
+      - 3000:3000
+    depends_on:
+      - blackbox
+      - prometheus
